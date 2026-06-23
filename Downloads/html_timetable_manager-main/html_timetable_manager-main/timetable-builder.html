@@ -1,0 +1,2887 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timetable Builder · Multi-Class · html_timetable_manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <style>
+    :root {
+      --ink: #1f2a44;
+      --ink-soft: #3c4a6b;
+      --paper: #f2f4ef;
+      --paper-card: #fdfdfb;
+      --rule: #d9ddd3;
+      --amber: #e8a33d;
+      --amber-dark: #c8842a;
+      --sage: #7c9885;
+      --coral: #d96b5a;
+      --gray: #8a8f88;
+      --green: #4a9a6e;
+      --shadow: 0 1px 0 rgba(31, 42, 68, 0.04), 0 8px 24px -12px rgba(31, 42, 68, 0.18);
+      --radius: 10px;
+      font-size: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(var(--paper), var(--paper)),
+        repeating-linear-gradient(0deg, rgba(31, 42, 68, 0.035) 0, rgba(31, 42, 68, 0.035) 1px, transparent 1px, transparent 28px),
+        repeating-linear-gradient(90deg, rgba(31, 42, 68, 0.035) 0, rgba(31, 42, 68, 0.035) 1px, transparent 1px, transparent 28px);
+      color: var(--ink);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      line-height: 1.45;
+      min-height: 100vh;
+    }
+
+    a {
+      color: var(--amber-dark);
+    }
+
+    header.hero {
+      padding: 36px 28px 22px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--amber-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+      display: inline-block;
+    }
+
+    .back-link {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12.5px;
+      letter-spacing: .04em;
+      color: var(--ink-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      border: 1px solid var(--rule);
+      background: var(--paper-card);
+      padding: 6px 12px;
+      border-radius: 999px;
+      transition: border-color .15s, color .15s;
+    }
+
+    .back-link:hover {
+      border-color: var(--amber-dark);
+      color: var(--amber-dark);
+    }
+
+    h1.title {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: clamp(28px, 4vw, 42px);
+      margin: 6px 0 6px;
+      letter-spacing: -0.01em;
+    }
+
+    p.subtitle {
+      max-width: 700px;
+      color: var(--ink-soft);
+      margin: 0 0 16px;
+      font-size: 15px;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      border: 1px solid var(--rule);
+      background: var(--paper-card);
+      padding: 4px 9px;
+      border-radius: 999px;
+      color: var(--ink-soft);
+    }
+
+    main.layout {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 8px 28px 80px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media(max-width:900px) {
+      main.layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--paper-card);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 20px 22px;
+      margin-bottom: 18px;
+    }
+
+    .card h2 {
+      font-family: 'Fraunces', serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--rule);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card h2::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      display: inline-block;
+      flex: none;
+    }
+
+    .card-hint {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--ink-soft);
+      margin: 0 0 12px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      margin-bottom: 5px;
+      line-height: 1.35;
+    }
+
+    .field input[type=text],
+    .field input[type=time],
+    .field select,
+    .field input[type=number],
+    .field textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--rule);
+      border-radius: 7px;
+      background: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 220px;
+      resize: vertical;
+      font-family: 'IBM Plex Mono', monospace;
+      white-space: pre-wrap;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--amber-dark);
+      box-shadow: 0 0 0 3px rgba(200, 132, 42, 0.14);
+    }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .daygrid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .daychip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      border: 1px solid var(--rule);
+      border-radius: 7px;
+      padding: 6px 0;
+      width: 42px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      background: #fff;
+      color: var(--ink-soft);
+      transition: background .12s, border-color .12s, color .12s;
+    }
+
+    .daychip:hover {
+      border-color: var(--amber-dark);
+    }
+
+    .daychip.on {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    /* class-section grid */
+    .class-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .class-item {
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px 4px;
+      text-align: center;
+    }
+
+    .class-item .class-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .class-item select {
+      width: 100%;
+      font-size: 11px;
+      border: none;
+      background: none;
+      color: var(--ink);
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .class-item.active {
+      background: #eaf3ef;
+      border-color: var(--sage);
+    }
+
+    .btnrow {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .btnrow button.sm {
+      flex: 1 1 auto;
+      white-space: normal;
+      line-height: 1.3;
+    }
+
+    /* import area */
+    .import-zone {
+      border: 2px dashed var(--rule);
+      border-radius: 8px;
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      background: #fafaf7;
+      transition: border-color .2s;
+    }
+
+    .import-zone:hover,
+    .import-zone.drag {
+      border-color: var(--amber-dark);
+    }
+
+    .import-zone p {
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--gray);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .import-zone .icon {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    #importFile {
+      display: none;
+    }
+
+    .import-preview {
+      max-height: 120px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+
+    .import-row {
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 3px 5px;
+      border-radius: 4px;
+      color: var(--ink-soft);
+      margin-bottom: 1px;
+    }
+
+    .import-row.ok {
+      background: #e8f5ec;
+      color: #2a6b3e;
+    }
+
+    .import-row.warn {
+      background: #fbe9e2;
+      color: #8a3c24;
+    }
+
+    .cs-item {
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafaf7;
+    }
+
+    .cs-item .row2 {
+      margin-bottom: 10px;
+    }
+
+    .cs-item label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+    }
+
+    .cs-item input[type=text],
+    .cs-item input[type=number] {
+      width: 100%;
+      padding: 7px 8px;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      font-size: 12.5px;
+      background: #fff;
+    }
+
+    .cs-item select[multiple] {
+      width: 100%;
+      min-height: 78px;
+      padding: 5px;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      font-size: 11.5px;
+      background: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .cs-item .cs-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      gap: 8px;
+    }
+
+    .cs-item .cs-hint {
+      font-size: 10.5px;
+      color: var(--gray);
+    }
+
+    button.del-cs {
+      background: none;
+      border: none;
+      color: var(--coral);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      flex: none;
+    }
+
+    .cs-empty {
+      font-size: 11.5px;
+      color: var(--gray);
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 6px 2px;
+      line-height: 1.5;
+    }
+
+    button.primary {
+      width: 100%;
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13.5px;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background .12s;
+    }
+
+    button.primary:hover {
+      background: var(--ink-soft);
+    }
+
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink-soft);
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: border-color .12s, color .12s;
+    }
+
+    button.secondary:hover {
+      border-color: var(--ink-soft);
+      color: var(--ink);
+    }
+
+    button.sm {
+      font-size: 11.5px;
+      padding: 7px 10px;
+      border-radius: 6px;
+    }
+
+    .warning {
+      font-size: 12px;
+      background: #fbe9e2;
+      border: 1px solid #e7b8a5;
+      color: #8a3c24;
+      padding: 9px 11px;
+      border-radius: 7px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .info {
+      font-size: 12px;
+      background: #e8f0fb;
+      border: 1px solid #b3c8ee;
+      color: #2a4a8a;
+      padding: 9px 11px;
+      border-radius: 7px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .success {
+      font-size: 12px;
+      background: #e8f5ec;
+      border: 1px solid #a3d4b3;
+      color: #1e5c30;
+      padding: 9px 11px;
+      border-radius: 7px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    /* conflict badge */
+    .conflict-badge {
+      display: inline-block;
+      background: var(--coral);
+      color: #fff;
+      font-size: 10px;
+      font-family: 'IBM Plex Mono', monospace;
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    /* tabs for class sections */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 6px 12px;
+      border: 1px solid var(--rule);
+      border-radius: 20px;
+      cursor: pointer;
+      background: #fff;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      transition: background .12s, border-color .12s, color .12s;
+    }
+
+    .tab:hover {
+      border-color: var(--ink-soft);
+    }
+
+    .tab.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .tab.has-conflict {
+      border-color: var(--coral);
+      color: var(--coral);
+    }
+
+    .tab.active.has-conflict {
+      background: var(--coral);
+      border-color: var(--coral);
+      color: #fff;
+    }
+
+    .output-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .output-head h2 {
+      font-family: 'Fraunces', serif;
+      font-size: 21px;
+      margin: 0 0 4px;
+      font-weight: 600;
+    }
+
+    .output-head .meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px;
+      color: var(--ink-soft);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 9px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .toolbar button.print {
+      background: var(--amber);
+      border: 1px solid var(--amber-dark);
+      color: #3a2a09;
+    }
+
+    .toolbar button.csv {
+      background: #fff;
+      border: 1px solid var(--rule);
+      color: var(--ink-soft);
+    }
+
+    .toolbar button.gen-all {
+      background: var(--green);
+      border: 1px solid #2d7a4e;
+      color: #fff;
+    }
+
+    /* conflict panel */
+    .conflict-panel {
+      background: #fff8f6;
+      border: 1px solid #f0c4b4;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+
+    .conflict-panel h3 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--coral);
+      margin: 0 0 8px;
+    }
+
+    .conflict-item {
+      font-size: 11.5px;
+      color: #7a3030;
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 3px 0;
+    }
+
+    /* grid table */
+    .grid-wrap {
+      background: var(--paper-card);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 10px;
+      position: relative;
+      overflow-x: auto;
+      margin-bottom: 14px;
+    }
+
+    table.tt {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      min-width: 480px;
+    }
+
+    table.tt th,
+    table.tt td {
+      border: 1px solid var(--rule);
+      padding: 0;
+      vertical-align: top;
+    }
+
+    table.tt thead th {
+      background: var(--ink);
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px;
+      letter-spacing: .04em;
+      padding: 10px 6px;
+      text-align: center;
+    }
+
+    table.tt thead th:first-child {
+      background: var(--ink-soft);
+      width: 90px;
+      border-top-left-radius: 6px;
+    }
+
+    table.tt thead th:last-child {
+      border-top-right-radius: 6px;
+    }
+
+    td.timecol {
+      background: #f7f5ee;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      text-align: center;
+      padding: 9px 4px;
+      white-space: nowrap;
+    }
+
+    td.timecol .pnum {
+      display: block;
+      font-size: 9.5px;
+      color: var(--gray);
+      margin-bottom: 3px;
+      letter-spacing: .04em;
+    }
+
+    tr.breakrow td {
+      background: repeating-linear-gradient(135deg, #efe9d8 0, #efe9d8 6px, #e9e2cd 6px, #e9e2cd 12px);
+      color: #7a6a3e;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      text-align: center;
+      padding: 7px;
+      letter-spacing: .03em;
+    }
+
+    td.cell {
+      padding: 3px;
+    }
+
+    td.cell select {
+      width: 100%;
+      border: none;
+      border-radius: 5px;
+      padding: 9px 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      text-align: center;
+      color: var(--ink);
+    }
+
+    td.cell select:focus {
+      outline: 2px solid var(--amber-dark);
+      outline-offset: 1px;
+    }
+
+    td.cell.free select {
+      color: var(--gray);
+      font-weight: 500;
+      font-style: italic;
+    }
+
+    td.cell.conflict {
+      outline: 2px solid var(--coral);
+      outline-offset: -2px;
+    }
+
+    td.cell.conflict select {
+      background: #fde8e4 !important;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--rule);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .legend i {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    footer.note {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 28px 50px;
+      color: var(--gray);
+      font-size: 11.5px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* teacher assignment panel */
+    .teacher-list {
+      max-height: 160px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+
+    .teacher-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--rule);
+      font-size: 12px;
+    }
+
+    .teacher-row:last-child {
+      border-bottom: none;
+    }
+
+    .teacher-name {
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .teacher-classes {
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      font-family: 'IBM Plex Mono', monospace;
+      white-space: nowrap;
+    }
+
+    .lab-pair-chip {
+      width: auto !important;
+      padding: 6px 10px !important;
+    }
+
+    @media print {
+      body {
+        background: #fff !important;
+      }
+
+      header.hero,
+      aside.config,
+      .toolbar,
+      footer.note,
+      .empty-state,
+      .conflict-panel,
+      .tabs-wrapper {
+        display: none !important;
+      }
+
+      main.layout {
+        grid-template-columns: 1fr;
+        padding: 0;
+      }
+
+      .grid-wrap {
+        box-shadow: none;
+        border: 1px solid #999;
+      }
+
+      td.cell select,
+      tr.breakrow td {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      td.cell select {
+        pointer-events: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="hero">
+    <a class="back-link" href="index.html">&larr; Back to Timetable Manager</a>
+    <h1 class="title">Timetable Builder</h1>
+    <p class="subtitle">Build timetables for Classes 1–10 with multiple sections. Import teacher assignments from
+      CSV/Excel and generate balanced timetables for every class section at once — no teacher is ever scheduled into two
+      sections during the same period.</p>
+    <div class="badges">
+      <span class="badge">Classes 1–10</span>
+      <span class="badge">Multi-section (A/B/C)</span>
+      <span class="badge">CSV/Excel import</span>
+      <span class="badge">No teacher double-booking</span>
+      <span class="badge">Auto-balanced</span>
+      <span class="badge">Print &amp; CSV export</span>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- ============ CONFIG SIDEBAR ============ -->
+    <aside class="config">
+
+      <!-- GENERAL -->
+      <div class="card">
+        <h2>General</h2>
+        <div class="field">
+          <label>School / Institute name</label>
+          <input type="text" id="instName" placeholder="e.g. Sri Vidya School">
+        </div>
+        <div class="field">
+          <label>Timetable title</label>
+          <input type="text" id="ttTitle" value="Weekly Timetable">
+        </div>
+      </div>
+
+      <!-- CLASSES & SECTIONS -->
+      <div class="card">
+        <h2>Classes &amp; Sections</h2>
+        <p class="card-hint">Choose how many sections each class has. Leave at 0 to skip a class.</p>
+        <div class="class-grid" id="classGrid"></div>
+        <div class="btnrow">
+          <button class="secondary sm" id="preset1Btn">10–7: 1 sec · 6–1: 2 sec</button>
+          <button class="secondary sm" id="allOneBtn">All 1 section</button>
+          <button class="secondary sm" id="allTwoBtn">All 2 sections</button>
+        </div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div class="card">
+        <h2>Days &amp; Periods</h2>
+        <div class="field">
+          <label>School days</label>
+          <div class="daygrid" id="dayGrid"></div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Start time</label>
+            <input type="time" id="startTime" value="09:00">
+          </div>
+          <div class="field">
+            <label>Period length</label>
+            <select id="periodDur">
+              <option value="30">30 min</option>
+              <option value="35">35 min</option>
+              <option value="40" selected>40 min</option>
+              <option value="45">45 min</option>
+              <option value="50">50 min</option>
+              <option value="60">60 min</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Periods / day</label>
+            <select id="periodsPerDay">
+              <option>4</option>
+              <option>5</option>
+              <option selected>6</option>
+              <option>7</option>
+              <option>8</option>
+              <option>9</option>
+              <option>10</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Break after every</label>
+            <select id="breakAfter">
+              <option value="0">No breaks</option>
+              <option value="2" selected>2 periods</option>
+              <option value="3">3 periods</option>
+              <option value="4">4 periods</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Break length (min)</label>
+          <input type="number" id="breakDur" value="15" min="5" max="60" style="max-width:110px;">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Min free periods / day (per teacher)</label>
+            <input type="number" id="minFreePerDay" value="1" min="0" max="9">
+          </div>
+          <div class="field">
+            <label>Max free periods / day (per teacher)</label>
+            <input type="number" id="maxFreePerDay" value="2" min="0" max="9">
+          </div>
+        </div>
+      </div>
+
+      <!-- IMPORT -->
+      <div class="card">
+        <h2>Import Teacher Schedule</h2>
+        <p class="card-hint">Upload your CSV or Excel (.xlsx/.xls) file. Columns: <b>Subject, Teacher, Classes,
+            Periods</b></p>
+        <div class="import-zone" id="importZone">
+          <div class="icon">📂</div>
+          <p>Drop CSV/XLSX file here or click to browse</p>
+          <input type="file" id="importFile" accept=".csv,.txt,.xlsx,.xls">
+        </div>
+        <div id="importPreview" class="import-preview"></div>
+        <div id="importStatus"></div>
+        <div class="btnrow">
+          <button class="secondary sm" id="loadSampleBtn">Load sample data</button>
+          <button class="secondary sm" id="exportImportCsvBtn">Download CSV</button>
+          <button class="secondary sm" id="clearImportBtn">Clear import</button>
+        </div>
+      </div>
+
+      <!-- COMBINED SESSIONS -->
+      <div class="card">
+        <h2>Combined / Special Sessions</h2>
+        <p class="card-hint">For one teacher running a single shared class across multiple sections at once (e.g. a
+          P.T. period taught jointly to grades 8, 9 &amp; 10). The whole group gets the same slot; it counts toward
+          each section's weekly schedule without needing the teacher present more than once.</p>
+        <div id="combinedSessionsList"></div>
+        <div class="btnrow" style="gap: 8px; margin-top: 8px;">
+          <button class="secondary sm" id="downloadCombinedSessionsCsvBtn">⇣ Download CSV</button>
+          <button class="secondary sm" id="importCombinedSessionsCsvBtn">⇡ Import CSV</button>
+          <input type="file" id="combinedSessionsCsvInput" accept=".csv" style="display:none;">
+        </div>
+        <button class="secondary sm" id="addCombinedSessionBtn" style="margin-top:8px;width:100%;">+ Add combined
+          session</button>
+      </div>
+
+      <!-- LAB BLOCKS -->
+      <div class="card">
+        <h2>Double-Period Lab Blocks</h2>
+        <p class="card-hint">For a subject that always runs as a 2-period block in fixed slots (e.g. Computer Lab
+          only in P1–P2 or P6–P7), rotated across several teacher/section groups over the week.</p>
+        <div class="field">
+          <label>Subject name</label>
+          <input type="text" id="labSubject" placeholder="e.g. Computer">
+        </div>
+        <div class="field">
+          <label>Allowed period-pairs</label>
+          <div id="labPairsList" class="daygrid"></div>
+        </div>
+        <div id="labGroupsList"></div>
+        <div class="btnrow" style="gap: 8px; margin-top: 8px;">
+          <button class="secondary sm" id="downloadLabBlocksCsvBtn">⇣ Download CSV</button>
+          <button class="secondary sm" id="importLabBlocksCsvBtn">⇡ Import CSV</button>
+          <input type="file" id="labBlocksCsvInput" accept=".csv" style="display:none;">
+        </div>
+        <button class="secondary sm" id="addLabGroupBtn" style="margin-top:8px;width:100%;">+ Add teacher/section
+          group</button>
+      </div>
+
+      <!-- CONFIG EXPORT -->
+      <div class="card">
+        <h2>Config export</h2>
+        <p class="card-hint">Show, download, or import your current builder configuration in YAML format.</p>
+        <div class="btnrow" style="flex-wrap: wrap; gap: 8px;">
+          <button class="secondary" id="showConfigYamlBtn">⇣ Show YAML</button>
+          <button class="secondary" id="downloadConfigYamlBtn">⇣ Download YAML</button>
+          <button class="secondary" id="importConfigYamlBtn">⇡ Import YAML</button>
+        </div>
+        <div class="field" style="margin-top: 14px;">
+          <label for="configYamlTextarea">YAML configuration</label>
+          <textarea id="configYamlTextarea" placeholder="YAML config appears here when you export. Paste YAML here to import."></textarea>
+        </div>
+      </div>
+
+      <!-- GENERATE -->
+      <div class="card">
+        <h2>Generate</h2>
+        <div id="globalWarning"></div>
+        <button class="primary" id="generateAllBtn">⚡ Generate All Class Timetables</button>
+        <div class="btnrow">
+          <button class="secondary sm" id="clearAllBtn">Clear all grids</button>
+          <button class="secondary sm" id="resetBtn">Reset everything</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ============ OUTPUT ============ -->
+    <section class="output">
+      <div class="output-head">
+        <div>
+          <h2 id="outTitle">Weekly Timetable</h2>
+          <div class="meta" id="outMeta"></div>
+        </div>
+        <div class="toolbar">
+          <button class="print" id="printBtn">🖨 Print / PDF</button>
+          <button class="csv" id="csvBtn">⇣ Export CSV</button>
+        </div>
+      </div>
+
+      <!-- class section tabs -->
+      <div class="tabs-wrapper" id="tabsWrapper" style="display:none;">
+        <div class="tabs" id="classTabs"></div>
+      </div>
+
+      <!-- conflict panel -->
+      <div class="conflict-panel" id="conflictPanel" style="display:none;">
+        <h3>⚠ Teacher Conflicts From Manual Edits</h3>
+        <div id="conflictList"></div>
+      </div>
+
+      <!-- teacher info for current class -->
+      <div id="teacherInfo" style="display:none;" class="card">
+        <h2>Teachers for <span id="teacherInfoClass"></span></h2>
+        <div class="teacher-list" id="teacherList"></div>
+      </div>
+
+      <div class="grid-wrap" id="gridWrap">
+        <div class="empty-state">Configure classes and periods on the left, then click <b>Generate All Class
+            Timetables</b>.</div>
+      </div>
+
+      <div class="legend" id="legend"></div>
+    </section>
+
+  </main>
+
+  <footer class="note">
+    Data stored only in this browser (localStorage) — nothing is uploaded. · html_timetable_manager · resolves issue
+    #12, #13
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const STORAGE_KEY = "tt_builder_multi_v1";
+      const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const PALETTE = [
+        "#cfe0d6", "#f3d9c4", "#d8d4ee", "#f6e2b8", "#cfe3ef", "#e7cdd6",
+        "#d6e6c3", "#f0d3cf", "#c9e1e0", "#ece0c8", "#d3d8ea", "#e3d6c0",
+        "#b8dcc8", "#f5d5b0", "#cdd0ea", "#faeac0", "#b8d8ea", "#ead5c0",
+        "#c0dcc0", "#ead8d0", "#b8dce0", "#f0e0b0", "#d0d0ea", "#e8d0b8"
+      ];
+
+      // ---- state ----
+      let state = {
+        instName: "",
+        ttTitle: "Weekly Timetable",
+        days: [true, true, true, true, true, false, false],
+        startTime: "09:00",
+        periodDur: 40,
+        periodsPerDay: 6,
+        breakAfter: 2,
+        breakDur: 15,
+        minFreePerDay: 1,
+        maxFreePerDay: 2,
+        // classes: {classNum: sectionCount}  e.g. {1:2, 2:2, ... 7:1 ... 10:1}
+        classes: { 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 1, 8: 1, 9: 1, 10: 1 },
+        // importedTeachers: [{subject, teacher, classes:[], periodsPerWeek}]
+        importedTeachers: [],
+        // combinedSessions: groups of sections that share one teacher/subject at the same
+        // exact slot. Each entry: {id, subject, teacher, sections:["8","9","10"], periodsPerWeek}
+        combinedSessions: [],
+        // labBlocks: a recurring double-period block pinned to specific period-pairs,
+        // rotated across many section-groups per teacher over the week.
+        labBlocks: {
+          subject: "Computer",
+          pairs: [[0, 1], [5, 6]],
+          groups: []
+        },
+        // grids: {"1A":{dayIdx:{periodIdx: subjectId}}, ...}
+        grids: {},
+        // subjects derived from import per class section: {"1A":[{id,name,teacher,weeks}]}
+        classSubjects: {},
+        activeTab: "",
+        nextId: 1
+      };
+
+      // Pristine snapshot of the defaults above, captured before load() can mutate `state`.
+      // "Reset everything" restores from this instead of relying on a full page reload, which
+      // can behave unreliably when this file is embedded in an iframe/sandbox.
+      const DEFAULT_STATE_JSON = JSON.stringify(state);
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) state = Object.assign(state, JSON.parse(raw));
+        } catch (e) { }
+      }
+      function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { }
+      }
+
+      // ---- utils ----
+      function escHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      }
+      function addMins(hhmm, mins) {
+        const [h, m] = hhmm.split(":").map(Number);
+        const d = new Date(2000, 0, 1, h, m);
+        d.setMinutes(d.getMinutes() + mins);
+        return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+      }
+      function fmt12(hhmm) {
+        const [h, m] = hhmm.split(":").map(Number);
+        return ((h + 11) % 12 + 1) + ":" + String(m).padStart(2, "0") + (h >= 12 ? " PM" : " AM");
+      }
+
+      // ---- derive section keys ----
+      function getSections() {
+        const secs = [];
+        for (let c = 10; c >= 1; c--) {
+          const n = state.classes[c] || 0;
+          if (n === 0) continue;
+          if (n === 1) secs.push(String(c));
+          if (n >= 2) { secs.push(c + "A"); secs.push(c + "B"); }
+          if (n >= 3) { secs.push(c + "C"); }
+        }
+        return secs;
+      }
+
+      // ---- normalize class string from import ----
+      // Handles real-world messy spreadsheet input:
+      //  "1A, 1B, 2A"      -> ["1A","1B","2A"]
+      //  "7" or "7.0"      -> ["7"]            (numeric-only Excel cell, bare class no section letter)
+      //  "5A/5B"           -> ["5A","5B"]      (slash-separated)
+      //  "6A,6B7,8,9,10"   -> ["6A","6B","7","8","9","10"]  (no-space list with an accidental
+      //                                                       letter+digit run-together, e.g. "6B7")
+      function parseClassList(raw) {
+        if (raw === undefined || raw === null || raw === "") return [];
+        let s = String(raw).trim();
+        // numeric cell from Excel like 7 or 7.0 with nothing else
+        if (/^\d+(\.0+)?$/.test(s)) return [String(parseInt(s, 10))];
+        // normalize separators: / | ; and the word "and" all act like commas
+        s = s.replace(/[\/|;]+/g, ",").replace(/\band\b/gi, ",");
+        const tokens = s.split(",").map(x => x.trim()).filter(Boolean);
+        const out = [];
+        tokens.forEach(tok => {
+          tok = tok.toUpperCase().replace(/\s+/g, "");
+          if (/^\d+\.0$/.test(tok)) tok = String(parseInt(tok, 10));
+          // split a run-together token like "6B7" (class+section immediately
+          // followed by another bare class number) into "6B" + "7"
+          const merged = tok.match(/^(\d{1,2}[A-Z])(\d{1,2})$/);
+          if (merged) {
+            out.push(merged[1]);
+            out.push(merged[2]);
+            return;
+          }
+          if (/^\d{1,2}[A-Z]?$/.test(tok)) out.push(tok);
+        });
+        return out;
+      }
+
+      // parse periods number from strings like "6 each grade", "2 periods",
+      // "4periods for grade 10", "5 period(Separate)"
+      function parsePeriods(raw) {
+        if (!raw) return 0;
+        const m = String(raw).match(/(\d+)/);
+        return m ? parseInt(m[1], 10) : 0;
+      }
+
+      // split a teacher cell like "Uma & Chandrakala" into ["Uma","Chandrakala"]
+      // (used for conflict-checking; the display keeps the original combined name)
+      function splitTeacherNames(raw) {
+        return String(raw || "").split(/&|\/|,/).map(t => t.trim()).filter(Boolean);
+      }
+
+      // ---- CSV parse ----
+      function parseCSV(text) {
+        const lines = text.trim().split(/\r?\n/);
+        const rows = [];
+        for (const line of lines) {
+          // simple CSV split (handles quoted fields)
+          const cols = [];
+          let cur = "", inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (c === '"') { inQ = !inQ; }
+            else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ""; }
+            else cur += c;
+          }
+          cols.push(cur.trim());
+          rows.push(cols);
+        }
+        return rows;
+      }
+
+      function importRows(rows) {
+        if (rows.length < 2) { return { ok: false, msg: "File must have a header row + data rows." }; }
+
+        // find header indices (flexible)
+        const header = rows[0].map(h => String(h === undefined || h === null ? "" : h).toLowerCase().replace(/[^a-z]/g, ""));
+        const ci = {
+          subject: header.findIndex(h => h.includes("subject") || h === "subj"),
+          teacher: header.findIndex(h => h.includes("teacher") || h.includes("staff")),
+          classes: header.findIndex(h => h.includes("class") || h.includes("grade") || h.includes("section")),
+          periods: header.findIndex(h => h.includes("period") || h.includes("per") || h.includes("freq"))
+        };
+
+        const fallback = [0, 1, 2, 3];
+        if (ci.subject < 0) ci.subject = fallback[0];
+        if (ci.teacher < 0) ci.teacher = fallback[1];
+        if (ci.classes < 0) ci.classes = fallback[2];
+        if (ci.periods < 0) ci.periods = fallback[3];
+
+        const teachers = [];
+        const msgs = [];
+        for (let r = 1; r < rows.length; r++) {
+          const row = rows[r];
+          if (!row || row.every(c => c === undefined || c === null || !String(c).trim())) continue;
+          const cell = (i) => row[i] === undefined || row[i] === null ? "" : String(row[i]).trim();
+          const subj = cell(ci.subject);
+          const teacher = cell(ci.teacher);
+          const classesRaw = cell(ci.classes);
+          const periodsRaw = cell(ci.periods);
+          if (!subj) continue;
+          const classes = parseClassList(classesRaw);
+          const periods = parsePeriods(periodsRaw) || 5;
+          teachers.push({ subject: subj, teacher: teacher || "TBD", classes, periodsPerWeek: periods });
+          msgs.push({ ok: classes.length > 0, msg: `${subj} / ${teacher} → [${classes.join(", ")}] × ${periods}/wk` });
+        }
+        state.importedTeachers = teachers;
+        deriveClassSubjects();
+        save();
+        return { ok: true, msgs };
+      }
+
+      // CSV text -> rows -> importRows
+      function importCSV(text) {
+        const rows = parseCSV(text);
+        return importRows(rows);
+      }
+
+      // XLSX/XLS ArrayBuffer -> rows (first sheet) -> importRows
+      function importWorkbook(arrayBuffer) {
+        let wb;
+        try {
+          wb = XLSX.read(arrayBuffer, { type: "array" });
+        } catch (e) {
+          return { ok: false, msg: "Could not read this Excel file. Try saving it as .xlsx and re-uploading." };
+        }
+        const sheetName = wb.SheetNames[0];
+        if (!sheetName) return { ok: false, msg: "The workbook has no sheets." };
+        const sheet = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: true });
+        return importRows(rows);
+      }
+
+      // Build per-class-section subject list from importedTeachers
+      function deriveClassSubjects() {
+        const sections = getSections();
+        state.classSubjects = {};
+        let id = state.nextId;
+
+        sections.forEach(sec => {
+          const subjects = [];
+          state.importedTeachers.forEach(t => {
+            // does this teacher's class list include this section?
+            // match "6A" or "6" (covers all sections of class 6)
+            const classNum = parseInt(sec);
+            const secLetter = sec.replace(/^\d+/, ""); // "" or "A" or "B"
+            const matches = t.classes.some(c => {
+              const cn = parseInt(c);
+              const sl = c.replace(/^\d+/, "");
+              if (cn !== classNum) return false;
+              // exact match e.g. "6A"
+              if (sl === secLetter) return true;
+              // bare number e.g. "7" matches "7" (single section) and also "7A","7B" if teachers use just class number
+              if (sl === "") return true;
+              return false;
+            });
+            if (matches) {
+              subjects.push({ id: id++, name: t.subject, teacher: t.teacher, weeks: t.periodsPerWeek });
+            }
+          });
+          state.classSubjects[sec] = subjects;
+        });
+
+        // Combined sessions: every section in the group gets the SAME subject id, so the
+        // generator can recognize "this is one shared slot" and place it once, simultaneously,
+        // across the whole group rather than as independent per-section demand.
+        (state.combinedSessions || []).forEach(cs => {
+          const sharedId = id++;
+          cs.__sharedId = sharedId;
+          (cs.sections || []).forEach(sec => {
+            if (!state.classSubjects[sec]) return; // section no longer exists (e.g. class turned off)
+            state.classSubjects[sec].push({
+              id: sharedId,
+              name: cs.subject + " (combined)",
+              teacher: cs.teacher,
+              weeks: Number(cs.periodsPerWeek) || 0,
+              combinedGroupId: cs.id,
+              combinedSections: (cs.sections || []).slice()
+            });
+          });
+        });
+
+        // Lab blocks: a fixed double-period block (e.g. P1-P2 or P6-P7), pinned to specific
+        // period-pairs, shared across every section in the group at once. Like combined sessions,
+        // every member section gets the same subject id; "weeks" is expressed in PERIODS
+        // (blocksPerWeek * 2) so it scales correctly alongside regular per-period subjects.
+        ensureLabBlocks();
+        (state.labBlocks.groups || []).forEach(g => {
+          const memberSecs = (g.sections || []).filter(sec => state.classSubjects[sec]);
+          if (memberSecs.length === 0) return;
+          const blocks = Number(g.blocksPerWeek) || 0;
+          if (blocks <= 0) return;
+          const sharedId = id++;
+          g.__sharedId = sharedId;
+          memberSecs.forEach(sec => {
+            state.classSubjects[sec].push({
+              id: sharedId,
+              name: (state.labBlocks.subject || "Lab") + " (block)",
+              teacher: g.teacher,
+              weeks: blocks * 2, // 2 periods per block
+              labGroupId: g.id,
+              labSections: memberSecs.slice(),
+              isLabBlock: true
+            });
+          });
+        });
+
+        state.nextId = id;
+      }
+
+      // ---- SAMPLE DATA (from TeachersTTdetails.xlsx) ----
+      const SAMPLE_CSV = `Subject,Teacher,Classes,Periods
+Maths,Sandhya Rani,"1A, 1B, 2A, 2B, 3B",6 each grade
+Maths,Akhila,"3A, 4A, 4B, 5A, 5B",6 each grade
+Maths,Roja,"6A, 6B, 7, 8, 9, 10",5 each grade
+Maths (IIT),Shruthi,"6A, 6B, 8",2 each grade
+Maths (IIT),Shravani,7,2 periods
+EVS,Sai Priya,"1A, 1B, 2A, 2B",5 each grade
+Science,Sai Priya,"3A, 3B",5 each grade
+Science,Deepika,"4A, 4B, 5A, 5B",5 each grade
+Science,Sri Padha,"6A, 6B, 7, 8, 9",5 each grade
+Biology,Sri Padha,"9, 10",3 each grade
+IIT Science,Sri Padha,"6A, 6B, 7, 8",2 each grade
+Social,Srihitha,"3A, 3B, 4A, 4B, 5A, 5B",5 each grade
+Social,Manjula,"6A, 6B, 7, 8, 9, 10",5 each grade
+Computer,Pravalika,"1A, 1B, 2A, 2B, 3A, 3B, 4A, 4B",4 each grade
+Computer,Smrithi,"5A, 5B, 6A, 6B, 7, 8, 9, 10",4 each grade
+Hindi,Sushmitha,"1A, 1B, 2A, 2B",6 each grade
+Telugu,Mounika,"1A, 1B, 2A, 2B",6 each grade
+English,Aparna,"1A, 1B, 2A, 2B, 3B",6 each grade
+English,Divya,"3A, 4A, 4B, 5A, 5B",6 each grade
+English,Sameera,"6A, 6B, 7, 8, 9, 10",5 each grade
+Hindi (II Lang),Shakeer,"5A, 5B, 6A, 6B, 7, 8, 10",2 periods each grade
+Telugu (II Lang),Sukrutha,"5A, 5B, 6A, 6B, 7, 8, 10",2 periods each grade
+Hindi/Telugu (II Lang),Uma & Chandrakala,"3A, 3B, 4A, 4B",5 common periods
+Hindi/Telugu,Uma & Chandrakala,"4, 5, 6, 7, 8",2 periods
+Hindi/Telugu,Shakeer,9,5 periods
+Hindi/Telugu,Sukrutha,9,5 periods`;
+
+      // ---- conflict detection ----
+      // Returns array of {teacher, period, day, sections:[]} for each conflict
+      function detectConflicts() {
+        const sections = getSections();
+        const activeDays = [];
+        state.days.forEach((on, i) => { if (on) activeDays.push(i); });
+        const periodsPerDay = Number(state.periodsPerDay);
+
+        // For each (day, period), build map: teacher -> [sections that have that teacher assigned]
+        const conflicts = [];
+        activeDays.forEach(dayIdx => {
+          for (let p = 0; p < periodsPerDay; p++) {
+            const teacherSecs = {}; // teacherName -> [secKeys]
+            sections.forEach(sec => {
+              const grid = state.grids[sec];
+              if (!grid || !grid[dayIdx]) return;
+              const subId = grid[dayIdx][p];
+              if (!subId) return;
+              const subjects = state.classSubjects[sec] || [];
+              const subj = subjects.find(s => s.id === subId);
+              if (!subj || !subj.teacher || subj.teacher === "TBD") return;
+              const teachers = splitTeacherNames(subj.teacher);
+              teachers.forEach(t => {
+                if (!t) return;
+                if (!teacherSecs[t]) teacherSecs[t] = [];
+                teacherSecs[t].push({ sec, subject: subj.name, groupId: subj.combinedGroupId || subj.labGroupId || null });
+              });
+            });
+            // any teacher with >1 section in same period? legitimate combined/lab sharing
+            // (same groupId across all those sections) is not a conflict.
+            Object.entries(teacherSecs).forEach(([teacher, secs]) => {
+              if (secs.length > 1) {
+                const groupIds = new Set(secs.map(s => s.groupId));
+                const allSameLegitGroup = groupIds.size === 1 && secs[0].groupId;
+                if (!allSameLegitGroup) {
+                  conflicts.push({ teacher, dayIdx, period: p, secs });
+                }
+              }
+            });
+          }
+        });
+        return conflicts;
+      }
+
+      // ---- color palette per section ----
+      function colorForSubject(sec, subjectId) {
+        const subjects = state.classSubjects[sec] || [];
+        const idx = subjects.findIndex(s => s.id === subjectId);
+        if (idx < 0) return "#e6e6e6";
+        return PALETTE[idx % PALETTE.length];
+      }
+
+      // ---- row plan & time map ----
+      function buildRowPlan() {
+        const periodsPerDay = Number(state.periodsPerDay);
+        const breakAfter = Number(state.breakAfter);
+        const rows = [];
+        for (let p = 0; p < periodsPerDay; p++) {
+          rows.push({ type: "period", index: p });
+          if (breakAfter > 0 && (p + 1) % breakAfter === 0 && p + 1 < periodsPerDay) {
+            rows.push({ type: "break" });
+          }
+        }
+        return rows;
+      }
+      function buildTimeMap(rows) {
+        let cursor = state.startTime;
+        return rows.map(r => {
+          const dur = r.type === "break" ? Number(state.breakDur) : Number(state.periodDur);
+          const start = cursor, end = addMins(cursor, dur);
+          cursor = end;
+          return { start, end };
+        });
+      }
+
+      // ---- export generated grids into the main app's "schoolTimetable" localStorage format ----
+      // Main app (script.js) reads localStorage key "schoolTimetable":
+      //   { [className]: { className, days:[ { dayName, periods:[ {period,subject,teacherName,teacherId,time,type,breakAfter} ] } ] } }
+      // className is normalized like "Grade-6-A"; dayName is a full weekday name; time is "HH:MM-HH:MM".
+      const MAIN_APP_STORAGE_KEY = "schoolTimetable";
+      const FULL_DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+      function sectionToMainAppClassName(sec) {
+        // sec is like "7" (single-section class) or "6A" (multi-section). The main app's own
+        // normalizeClassSectionLabel() expects a class+letter; bare numbers don't normalize as
+        // cleanly, so single-section classes get section "A" here.
+        const m = String(sec).match(/^(\d{1,2})([A-C]?)$/);
+        if (!m) return "Grade-" + sec;
+        const num = m[1];
+        const letter = m[2] || "A";
+        return "Grade-" + num + "-" + letter;
+      }
+
+      // per-period (not per-row) start times, skipping break rows, indexed by period number (0-based)
+      function buildPeriodTimeMap() {
+        const periodsPerDay = Number(state.periodsPerDay);
+        const breakAfter = Number(state.breakAfter);
+        const times = {};
+        let cursor = state.startTime;
+        for (let p = 0; p < periodsPerDay; p++) {
+          const start = cursor;
+          const end = addMins(cursor, Number(state.periodDur));
+          times[p] = { start, end };
+          cursor = end;
+          if (breakAfter > 0 && (p + 1) % breakAfter === 0 && p + 1 < periodsPerDay) {
+            cursor = addMins(cursor, Number(state.breakDur));
+          }
+        }
+        return times;
+      }
+
+      function exportToMainAppStorage() {
+        const sections = getSections();
+        if (sections.length === 0) return false;
+
+        const activeDayIdxs = [];
+        state.days.forEach((on, i) => { if (on) activeDayIdxs.push(i); });
+        if (activeDayIdxs.length === 0) return false;
+
+        const periodsPerDay = Number(state.periodsPerDay);
+        const periodTimes = buildPeriodTimeMap();
+
+        const schoolTimetable = {};
+
+        sections.forEach(sec => {
+          if (!state.grids[sec]) return; // not generated
+          const subjects = state.classSubjects[sec] || [];
+          const className = sectionToMainAppClassName(sec);
+
+          const days = activeDayIdxs.map(dayIdx => {
+            const periods = [];
+            for (let p = 0; p < periodsPerDay; p++) {
+              const subId = (state.grids[sec][dayIdx] && state.grids[sec][dayIdx][p]) || 0;
+              const subj = subjects.find(s => s.id === subId);
+              const t = periodTimes[p] || { start: "", end: "" };
+              periods.push({
+                period: p + 1,
+                subject: subj ? subj.name : "",
+                teacherName: (subj && subj.teacher && subj.teacher !== "TBD") ? subj.teacher : "",
+                teacherId: "",
+                time: t.start && t.end ? (t.start + "-" + t.end) : "",
+                type: "Regular",
+                breakAfter: 0
+              });
+            }
+            return { dayName: FULL_DAY_NAMES[dayIdx], periods };
+          });
+
+          schoolTimetable[className] = { className, days };
+        });
+
+        if (Object.keys(schoolTimetable).length === 0) return false;
+
+        try {
+          localStorage.setItem(MAIN_APP_STORAGE_KEY, JSON.stringify(schoolTimetable));
+          return true;
+        } catch (e) {
+          console.warn("Could not save to main app storage", e);
+          return false;
+        }
+      }
+
+      // ---- generation ----
+      // ---- joint scheduling across all sections (prevents teacher double-booking by construction) ----
+      //
+      // Previously each section's grid was generated independently, so two sections could end up
+      // with the same teacher in the same day/period — conflicts were only caught afterwards by
+      // detectConflicts(). This version builds every section's grid together, slot by slot, and
+      // never places a teacher into a slot where they're already teaching another section.
+
+      function buildSectionTargets(sec, totalSlots) {
+        const subjects = (state.classSubjects[sec] || []).filter(s => s.weeks > 0);
+        if (subjects.length === 0 || totalSlots === 0) return [];
+        const sumW = subjects.reduce((a, s) => a + s.weeks, 0);
+        if (sumW <= totalSlots) {
+          return subjects.map(s => ({ id: s.id, name: s.name, teacher: s.teacher, w: s.weeks }));
+        }
+        const raw = subjects.map(s => s.weeks * totalSlots / sumW);
+        const floors = raw.map(Math.floor);
+        let used = floors.reduce((a, b) => a + b, 0);
+        const rem = totalSlots - used;
+        const order = raw.map((v, i) => ({ i, frac: v - floors[i] })).sort((a, b) => b.frac - a.frac);
+        for (let k = 0; k < rem; k++) floors[order[k % order.length].i]++;
+        return subjects.map((s, i) => ({ id: s.id, name: s.name, teacher: s.teacher, w: floors[i] }));
+      }
+
+      function generateAll() {
+        const sections = getSections();
+        if (sections.length === 0) {
+          showGlobalWarning("No classes selected. Set at least one class with ≥ 1 section.");
+          return;
+        }
+        // Re-derive subjects right before generating so combined-session and lab-block
+        // shared ids are fresh and every member section's subject list reflects the latest config.
+        deriveClassSubjects();
+
+        const activeDays = [];
+        state.days.forEach((on, i) => { if (on) activeDays.push(i); });
+        const periodsPerDay = Number(state.periodsPerDay);
+        const totalSlots = activeDays.length * periodsPerDay;
+
+        if (activeDays.length === 0 || totalSlots === 0) {
+          showGlobalWarning("Select at least one school day before generating.");
+          return;
+        }
+
+        // Per-teacher daily free-period bounds: every teacher should get at least
+        // minFreePerDay and at most maxFreePerDay free periods each day. We enforce
+        // the "at most" side proactively (skip a candidate that would leave a
+        // teacher with zero remaining free slots today) and report the "at least"
+        // side afterwards, since guaranteeing a minimum free count for every
+        // teacher while also meeting every section's weekly subject targets can
+        // conflict with the no-double-booking guarantee, which always wins.
+        const minFreePerDay = Number(state.minFreePerDay) || 0;
+        const maxFreePerDay = Number(state.maxFreePerDay) || periodsPerDay;
+
+        // per-section: target list, assigned-so-far counts, last-placed subject id (to avoid repeats),
+        // and a running free-period count used to rotate unavoidable gaps fairly across sections.
+        const secState = {};
+        sections.forEach(sec => {
+          const targets = buildSectionTargets(sec, totalSlots);
+          secState[sec] = {
+            targets,
+            target: Object.fromEntries(targets.map(t => [t.id, t.w])),
+            assigned: Object.fromEntries(targets.map(t => [t.id, 0])),
+            lastSubjectId: null,
+            freeCount: 0,
+            grid: {}
+          };
+        });
+
+        // teacherBusy["dayIdx_period"] = Set of teacher-person-names already placed in that slot
+        const teacherBusy = {};
+        const slotKey = (d, p) => d + "_" + p;
+
+        // ---- Combined sessions: pre-place these FIRST, before the regular per-section fill.
+        // A combined session is one teacher, one subject, one shared slot across every section
+        // in the group at once (e.g. P.T. taught jointly to grades 8+9+10). We find a slot where
+        // the teacher is free for ALL member sections simultaneously, write the same subject id
+        // into every member section's grid at that slot, and mark the teacher busy once for it —
+        // the regular fill then skips it because each member section is already at target for it.
+        const combinedUnplaced = []; // {subject, teacher, sections, needed, placed}
+        (state.combinedSessions || []).forEach(cs => {
+          const memberSecs = (cs.sections || []).filter(s => sections.includes(s));
+          if (memberSecs.length === 0) return;
+          const need = Number(cs.periodsPerWeek) || 0;
+          if (need <= 0) return;
+          let placed = 0;
+          const teacherNames = splitTeacherNames(cs.teacher);
+
+          outer:
+          for (const dayIdx of activeDays) {
+            for (let p = 0; p < periodsPerDay; p++) {
+              if (placed >= need) break outer;
+              const sk = slotKey(dayIdx, p);
+              if (!teacherBusy[sk]) teacherBusy[sk] = new Set();
+              const busy = teacherBusy[sk];
+              if (teacherNames.some(n => busy.has(n))) continue;
+              const allFree = memberSecs.every(sec => {
+                const g = secState[sec] && secState[sec].grid[dayIdx];
+                return !g || !g[p];
+              });
+              if (!allFree) continue;
+              memberSecs.forEach(sec => {
+                const st = secState[sec];
+                if (!st.grid[dayIdx]) st.grid[dayIdx] = {};
+                st.grid[dayIdx][p] = cs.__sharedId;
+                if (st.target[cs.__sharedId] === undefined) { st.target[cs.__sharedId] = need; st.assigned[cs.__sharedId] = 0; }
+                st.assigned[cs.__sharedId]++;
+                st.lastSubjectId = cs.__sharedId;
+              });
+              teacherNames.forEach(n => busy.add(n));
+              placed++;
+            }
+          }
+          if (placed < need) {
+            combinedUnplaced.push({ subject: cs.subject, teacher: cs.teacher, sections: memberSecs.join("+"), needed: need, placed });
+          }
+        });
+
+        // ---- Lab blocks: pre-place these next, after combined sessions but before the regular
+        // per-section fill. Each placement occupies BOTH periods of one allowed pair (e.g. P1-P2),
+        // simultaneously across every member section in the group, with the teacher busy for both.
+        ensureLabBlocks();
+        const labPairs = (state.labBlocks.pairs || []).filter(pr => pr[0] < periodsPerDay && pr[1] < periodsPerDay);
+        const labUnplaced = []; // {teacher, sections, needed, placed}
+        (state.labBlocks.groups || []).forEach(g => {
+          const memberSecs = (g.sections || []).filter(s => sections.includes(s));
+          if (memberSecs.length === 0 || !g.__sharedId) return;
+          const need = Number(g.blocksPerWeek) || 0;
+          if (need <= 0 || labPairs.length === 0) return;
+          let placed = 0;
+          const teacherNames = splitTeacherNames(g.teacher);
+
+          outerLab:
+          for (const dayIdx of activeDays) {
+            for (const pair of labPairs) {
+              if (placed >= need) break outerLab;
+              const [p1, p2] = pair;
+              const sk1 = slotKey(dayIdx, p1), sk2 = slotKey(dayIdx, p2);
+              if (!teacherBusy[sk1]) teacherBusy[sk1] = new Set();
+              if (!teacherBusy[sk2]) teacherBusy[sk2] = new Set();
+              const busy1 = teacherBusy[sk1], busy2 = teacherBusy[sk2];
+              // teacher must be free in BOTH periods of the pair
+              if (teacherNames.some(n => busy1.has(n) || busy2.has(n))) continue;
+              // every member section must be free in BOTH periods of the pair
+              const allFree = memberSecs.every(sec => {
+                const g1 = secState[sec] && secState[sec].grid[dayIdx];
+                return !g1 || (!g1[p1] && !g1[p2]);
+              });
+              if (!allFree) continue;
+              memberSecs.forEach(sec => {
+                const st = secState[sec];
+                if (!st.grid[dayIdx]) st.grid[dayIdx] = {};
+                st.grid[dayIdx][p1] = g.__sharedId;
+                st.grid[dayIdx][p2] = g.__sharedId;
+                if (st.target[g.__sharedId] === undefined) { st.target[g.__sharedId] = need * 2; st.assigned[g.__sharedId] = 0; }
+                st.assigned[g.__sharedId] += 2;
+                st.lastSubjectId = g.__sharedId;
+              });
+              teacherNames.forEach(n => { busy1.add(n); busy2.add(n); });
+              placed++;
+            }
+          }
+          if (placed < need) {
+            labUnplaced.push({ teacher: g.teacher, sections: memberSecs.join("+"), needed: need, placed });
+          }
+        });
+
+        let forcedFreeCount = 0;
+        const forcedFreeDetails = [];
+        let unmetCount = 0;
+        const bottleneckTeacherCounts = {}; // teacher name -> how many forced-free periods they caused
+        const teacherDayBelowMin = []; // {teacher, day} pairs that ended the day under minFreePerDay
+
+        activeDays.forEach((dayIdx) => {
+          // teacherPlacedToday[name] = periods already placed for that teacher today (used to
+          // cap them at maxFreePerDay free periods, i.e. at periodsPerDay - maxFreePerDay placed).
+          // Pre-placed combined/lab periods already in teacherBusy aren't counted here yet, so
+          // seed today's counts from what's already on the grid for each teacher at day start.
+          const teacherPlacedToday = {};
+          sections.forEach(sec => {
+            const g = secState[sec].grid[dayIdx];
+            if (!g) return;
+            for (let p = 0; p < periodsPerDay; p++) {
+              const subId = g[p];
+              if (!subId) continue;
+              const subj = (state.classSubjects[sec] || []).find(s => s.id === subId);
+              if (!subj) continue;
+              // only count each (teacher, period) once even though combined/lab groups
+              // place the same id across multiple sections in the same slot
+              splitTeacherNames(subj.teacher).forEach(n => {
+                const seenKey = "__seen_" + n + "_" + p;
+                if (!teacherPlacedToday[seenKey]) {
+                  teacherPlacedToday[seenKey] = true;
+                  teacherPlacedToday[n] = (teacherPlacedToday[n] || 0) + 1;
+                }
+              });
+            }
+          });
+          const maxPlacedToday = Math.max(0, periodsPerDay - maxFreePerDay);
+
+          for (let p = 0; p < periodsPerDay; p++) {
+            const sk = slotKey(dayIdx, p);
+            if (!teacherBusy[sk]) teacherBusy[sk] = new Set();
+            const busy = teacherBusy[sk];
+
+            // Visit sections most-behind-target first (so contended teachers get placed for whoever
+            // needs them most), but break ties by *fewest free periods so far* — this is what rotates
+            // an unavoidable gap between e.g. 6A and 6B instead of always parking it on the same one.
+            const order = sections.slice().sort((a, b) => {
+              const sa = secState[a], sb = secState[b];
+              const remA = sa.targets.reduce((acc, t) => acc + Math.max(0, sa.target[t.id] - sa.assigned[t.id]), 0);
+              const remB = sb.targets.reduce((acc, t) => acc + Math.max(0, sb.target[t.id] - sb.assigned[t.id]), 0);
+              if (remA !== remB) return remB - remA;
+              return sa.freeCount - sb.freeCount;
+            });
+
+            order.forEach(sec => {
+              const st = secState[sec];
+              if (!st.grid[dayIdx]) st.grid[dayIdx] = {};
+              if (st.grid[dayIdx][p]) return; // already filled by combined/lab pre-placement
+              if (st.targets.length === 0) { st.grid[dayIdx][p] = 0; return; }
+
+              // candidate subjects still under target, sorted by how far behind fair share they are,
+              // excluding any whose teacher has already hit their daily placed-period cap (so they
+              // keep at least maxFreePerDay free periods today).
+              const candidates = st.targets
+                .filter(t => st.assigned[t.id] < st.target[t.id])
+                .filter(t => {
+                  const names = splitTeacherNames(t.teacher);
+                  if (names.length === 0 || (names.length === 1 && names[0] === "TBD")) return true;
+                  return names.every(n => (teacherPlacedToday[n] || 0) < maxPlacedToday);
+                })
+                .sort((a, b) => {
+                  const shareA = st.target[a.id] - st.assigned[a.id];
+                  const shareB = st.target[b.id] - st.assigned[b.id];
+                  return shareB - shareA;
+                });
+
+              // prefer a candidate whose teacher is free AND isn't a back-to-back repeat;
+              // fall back to free-but-repeat; fall back to nothing (teacher conflict -> free period)
+              let pick = candidates.find(t => t.id !== st.lastSubjectId && !teacherIsBusy(t.teacher, busy));
+              let blockingTeachers = [];
+              if (pick === undefined) {
+                pick = candidates.find(t => !teacherIsBusy(t.teacher, busy));
+              }
+              if (pick === undefined && candidates.length > 0) {
+                // every remaining candidate's teacher is already busy this slot elsewhere —
+                // collect who, so the report can name the actual bottleneck(s).
+                const seen = new Set();
+                candidates.forEach(t => {
+                  splitTeacherNames(t.teacher).forEach(n => {
+                    if (busy.has(n) && !seen.has(n)) { seen.add(n); blockingTeachers.push(n); }
+                  });
+                });
+              }
+
+              if (pick) {
+                st.grid[dayIdx][p] = pick.id;
+                st.assigned[pick.id]++;
+                st.lastSubjectId = pick.id;
+                splitTeacherNames(pick.teacher).forEach(n => {
+                  busy.add(n);
+                  const seenKey = "__seen_" + n + "_" + p;
+                  if (!teacherPlacedToday[seenKey]) {
+                    teacherPlacedToday[seenKey] = true;
+                    teacherPlacedToday[n] = (teacherPlacedToday[n] || 0) + 1;
+                  }
+                });
+              } else {
+                st.grid[dayIdx][p] = 0;
+                st.lastSubjectId = null;
+                if (blockingTeachers.length) {
+                  forcedFreeCount++;
+                  st.freeCount++;
+                  blockingTeachers.forEach(n => { bottleneckTeacherCounts[n] = (bottleneckTeacherCounts[n] || 0) + 1; });
+                  forcedFreeDetails.push(`Class ${sec} · ${DAY_NAMES[dayIdx]} P${p + 1}: blocked by ${blockingTeachers.join(", ")} (already teaching another section this period)`);
+                }
+              }
+            });
+          }
+
+          // check minFreePerDay: any teacher placed in more than (periodsPerDay - minFreePerDay) slots today?
+          if (minFreePerDay > 0) {
+            const maxAllowedPlaced = periodsPerDay - minFreePerDay;
+            Object.keys(teacherPlacedToday).forEach(key => {
+              if (key.startsWith("__seen_")) return;
+              const count = teacherPlacedToday[key];
+              if (count > maxAllowedPlaced) {
+                teacherDayBelowMin.push({ teacher: key, day: DAY_NAMES[dayIdx], placed: count, allowed: maxAllowedPlaced });
+              }
+            });
+          }
+        });
+
+        sections.forEach(sec => {
+          state.grids[sec] = secState[sec].grid;
+          secState[sec].targets.forEach(t => {
+            if (secState[sec].assigned[t.id] < t.w) unmetCount += (t.w - secState[sec].assigned[t.id]);
+          });
+        });
+
+        if (!sections.includes(state.activeTab)) state.activeTab = sections[0];
+        const topBottlenecks = Object.entries(bottleneckTeacherCounts)
+          .sort((a, b) => b[1] - a[1]).slice(0, 8)
+          .map(([name, count]) => `${name} (${count} period${count === 1 ? "" : "s"})`);
+        state.lastGenReport = {
+          forcedFreeCount, forcedFreeDetails: forcedFreeDetails.slice(0, 30), unmetCount, topBottlenecks,
+          teacherDayBelowMin: teacherDayBelowMin.slice(0, 30), combinedUnplaced, labUnplaced
+        };
+        save();
+        const savedToMainApp = exportToMainAppStorage();
+        renderAll();
+
+        if (forcedFreeCount > 0 || unmetCount > 0 || teacherDayBelowMin.length > 0 || combinedUnplaced.length > 0 || labUnplaced.length > 0) {
+          const bits = [];
+          if (forcedFreeCount > 0) bits.push(`${forcedFreeCount} period(s) left free because every available teacher was already busy elsewhere at that time`);
+          if (unmetCount > 0) bits.push(`${unmetCount} period(s) of weekly subject targets could not be fully placed`);
+          if (teacherDayBelowMin.length > 0) bits.push(`${teacherDayBelowMin.length} teacher-day(s) ended up with fewer than the minimum ${minFreePerDay} free period(s) because their weekly load didn't leave enough slack`);
+          if (combinedUnplaced.length > 0) bits.push(`${combinedUnplaced.length} combined session(s) couldn't fit all their weekly periods — e.g. ${combinedUnplaced.slice(0, 3).map(c => `${c.subject} for [${c.sections}] (${c.placed}/${c.needed} placed)`).join("; ")}`);
+          if (labUnplaced.length > 0) bits.push(`${labUnplaced.length} lab block group(s) couldn't fit all their weekly blocks — e.g. ${labUnplaced.slice(0, 3).map(c => `${c.teacher} for [${c.sections}] (${c.placed}/${c.needed} blocks placed)`).join("; ")}`);
+          let msg = "Generated with caveats: " + bits.join("; ") + ". The conflict-free guarantee still holds — no teacher is ever double-booked, and no teacher exceeds the maximum " + maxFreePerDay + " free period(s)/day cap. Free periods have been rotated evenly across sections that share the same teacher rather than concentrated on one.";
+          if (topBottlenecks.length) {
+            msg += " Most-overbooked teacher(s): " + topBottlenecks.join("; ") + ". These teachers need a co-teacher for at least one of their sections, or fewer sections assigned, to close the gap.";
+          }
+          if (savedToMainApp) msg += " Saved to Timetable Manager — open \"View Timetable\" there to see it.";
+          showGlobalWarning(msg, false, forcedFreeDetails.slice(0, 30));
+        } else {
+          let msg = "✓ Generated " + sections.length + " conflict-free class timetables — no teacher is double-booked, and every teacher has between " + minFreePerDay + " and " + maxFreePerDay + " free period(s) each day.";
+          if (savedToMainApp) msg += " Saved to Timetable Manager — open \"View Timetable\" there to see it.";
+          showGlobalWarning(msg, true);
+        }
+      }
+
+      // a teacher cell may name one person ("Roja") or several ("Uma & Chandrakala");
+      // the slot is blocked if ANY named person in it is already teaching elsewhere this period.
+      function teacherIsBusy(teacherField, busySet) {
+        if (!teacherField || teacherField === "TBD") return false;
+        return splitTeacherNames(teacherField).some(n => busySet.has(n));
+      }
+
+      function showGlobalWarning(msg, ok, details) {
+        const el = document.getElementById("globalWarning");
+        let html = `<div class="${ok ? 'success' : 'warning'}">${escHtml(msg)}</div>`;
+        if (details && details.length) {
+          html += `<details style="margin:-4px 0 10px;"><summary style="cursor:pointer;font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;">Show affected periods (${details.length})</summary>`;
+          html += `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:#8a3c24;padding:6px 0 0 4px;">`;
+          html += details.map(d => escHtml(d)).join("<br>");
+          html += `</div></details>`;
+        }
+        el.innerHTML = html;
+        if (!details || !details.length) {
+          setTimeout(() => { if (el.innerHTML.includes(escHtml(msg))) el.innerHTML = ""; }, ok ? 5000 : 9000);
+        }
+      }
+
+      // ---- RENDER TABS ----
+      function renderTabs() {
+        const sections = getSections();
+        const wrapper = document.getElementById("tabsWrapper");
+        const tabs = document.getElementById("classTabs");
+        if (sections.length === 0) { wrapper.style.display = "none"; return; }
+        wrapper.style.display = "";
+
+        const conflicts = detectConflicts();
+        const conflictSecs = new Set();
+        conflicts.forEach(c => c.secs.forEach(s => conflictSecs.add(s.sec)));
+
+        tabs.innerHTML = "";
+        sections.forEach(sec => {
+          const btn = document.createElement("button");
+          btn.className = "tab" + (sec === state.activeTab ? " active" : "") + (conflictSecs.has(sec) ? " has-conflict" : "");
+          btn.textContent = "Class " + sec;
+          btn.addEventListener("click", () => {
+            state.activeTab = sec;
+            save();
+            renderAll();
+          });
+          tabs.appendChild(btn);
+        });
+      }
+
+      // ---- RENDER CONFLICT PANEL ----
+      function renderConflictPanel() {
+        const conflicts = detectConflicts();
+        const panel = document.getElementById("conflictPanel");
+        const list = document.getElementById("conflictList");
+        if (conflicts.length === 0) { panel.style.display = "none"; return; }
+        panel.style.display = "";
+        const activeDays = [];
+        state.days.forEach((on, i) => { if (on) activeDays.push(i); });
+        list.innerHTML = conflicts.map(c => {
+          const secNames = c.secs.map(s => `${s.sec} (${s.subject})`).join(", ");
+          return `<div class="conflict-item">⚠ ${escHtml(c.teacher)} · ${DAY_NAMES[c.dayIdx]} P${c.period + 1}: assigned to ${escHtml(secNames)}</div>`;
+        }).join("");
+      }
+
+      // ---- RENDER TEACHER INFO ----
+      function renderTeacherInfo(sec) {
+        const el = document.getElementById("teacherInfo");
+        const titleEl = document.getElementById("teacherInfoClass");
+        const listEl = document.getElementById("teacherList");
+        const subjects = state.classSubjects[sec] || [];
+        if (subjects.length === 0) { el.style.display = "none"; return; }
+        el.style.display = "";
+        titleEl.textContent = "Class " + sec;
+        listEl.innerHTML = subjects.map(s =>
+          `<div class="teacher-row">
+      <span class="teacher-name">${escHtml(s.name)}</span>
+      <span class="teacher-classes">${escHtml(s.teacher)} · ${s.weeks}/wk</span>
+    </div>`
+        ).join("");
+      }
+
+      // ---- RENDER GRID for active tab ----
+      function renderGrid(sec) {
+        const wrap = document.getElementById("gridWrap");
+        const legend = document.getElementById("legend");
+
+        if (!sec || !state.grids[sec]) {
+          wrap.innerHTML = '<div class="empty-state">Select a class tab and click <b>Generate All Class Timetables</b> to build the schedule.</div>';
+          legend.innerHTML = "";
+          return;
+        }
+
+        const activeDays = [];
+        state.days.forEach((on, i) => { if (on) activeDays.push(i); });
+        const subjects = state.classSubjects[sec] || [];
+        const grid = state.grids[sec];
+
+        // detect conflicts for this section
+        const allConflicts = detectConflicts();
+        const conflictSet = new Set(); // "dayIdx_period"
+        allConflicts.forEach(c => {
+          if (c.secs.some(s => s.sec === sec)) {
+            conflictSet.add(c.dayIdx + "_" + c.period);
+          }
+        });
+
+        const rows = buildRowPlan();
+        const times = buildTimeMap(rows);
+
+        let html = '<table class="tt"><thead><tr><th>Time</th>';
+        activeDays.forEach(d => html += "<th>" + DAY_NAMES[d] + "</th>");
+        html += "</tr></thead><tbody>";
+
+        rows.forEach((row, ri) => {
+          const t = times[ri];
+          if (row.type === "break") {
+            html += `<tr class="breakrow"><td class="timecol"><span class="pnum">break</span>${fmt12(t.start)}</td>`;
+            html += `<td colspan="${activeDays.length}">— Break — (${state.breakDur} min)</td></tr>`;
+          } else {
+            html += `<tr><td class="timecol"><span class="pnum">P${row.index + 1}</span>${fmt12(t.start)}<br>${fmt12(t.end)}</td>`;
+            activeDays.forEach(dayIdx => {
+              const subId = (grid[dayIdx] && grid[dayIdx][row.index]) || 0;
+              const bg = subId ? colorForSubject(sec, subId) : "#f1f1ec";
+              const isConflict = conflictSet.has(dayIdx + "_" + row.index);
+              const subj = subjects.find(s => s.id === subId);
+              html += `<td class="cell${subId ? "" : " free"}${isConflict ? " conflict" : ""}" data-day="${dayIdx}" data-period="${row.index}">`;
+              html += `<select style="background:${bg}" data-day="${dayIdx}" data-period="${row.index}" data-sec="${sec}">`;
+              html += `<option value="0"${subId ? "" : " selected"}>— Free —</option>`;
+              subjects.forEach(s => {
+                const teacherTag = s.teacher && s.teacher !== "TBD" ? ` (${s.teacher})` : "";
+                html += `<option value="${s.id}"${subId === s.id ? " selected" : ""}>${escHtml(s.name + teacherTag)}</option>`;
+              });
+              html += `</select></td>`;
+            });
+            html += "</tr>";
+          }
+        });
+        html += "</tbody></table>";
+        wrap.innerHTML = html;
+
+        // attach change listeners
+        wrap.querySelectorAll("select").forEach(sel => {
+          sel.addEventListener("change", () => {
+            const day = Number(sel.dataset.day), period = Number(sel.dataset.period), s = sel.dataset.sec;
+            const val = Number(sel.value);
+            if (!state.grids[s]) state.grids[s] = {};
+            if (!state.grids[s][day]) state.grids[s][day] = {};
+            state.grids[s][day][period] = val;
+            sel.style.background = val ? colorForSubject(s, val) : "#f1f1ec";
+            sel.closest("td").classList.toggle("free", !val);
+            save();
+            renderConflictPanel();
+            renderTabs();
+          });
+        });
+
+        // legend
+        legend.innerHTML = "";
+        subjects.forEach((s, idx) => {
+          const span = document.createElement("span");
+          const i = document.createElement("i");
+          i.style.background = PALETTE[idx % PALETTE.length];
+          span.appendChild(i);
+          span.appendChild(document.createTextNode(s.name));
+          legend.appendChild(span);
+        });
+      }
+
+      function renderAll() {
+        renderTabs();
+        renderConflictPanel();
+        const sec = state.activeTab || getSections()[0] || "";
+        document.getElementById("outTitle").textContent = (state.ttTitle || "Weekly Timetable") + (sec ? " — Class " + sec : "");
+        const activeDays = state.days.filter(Boolean).length;
+        document.getElementById("outMeta").textContent =
+          (state.instName ? state.instName + " · " : "") +
+          state.days.map((on, i) => on ? DAY_NAMES[i] : null).filter(Boolean).join("/") +
+          " · " + state.periodsPerDay + " periods/day · " + state.periodDur + " min";
+        renderTeacherInfo(sec);
+        renderGrid(sec);
+      }
+
+      // ---- RENDER CLASS GRID ----
+      function renderClassGrid() {
+        const wrap = document.getElementById("classGrid");
+        wrap.innerHTML = "";
+        for (let c = 10; c >= 1; c--) {
+          const item = document.createElement("div");
+          const n = state.classes[c] || 0;
+          item.className = "class-item" + (n > 0 ? " active" : "");
+          item.innerHTML = `<div class="class-label">Class ${c}</div>
+      <select data-class="${c}">
+        <option value="0"${n === 0 ? " selected" : ""}>Off</option>
+        <option value="1"${n === 1 ? " selected" : ""}>1 sec</option>
+        <option value="2"${n === 2 ? " selected" : ""}>2 sec</option>
+        <option value="3"${n === 3 ? " selected" : ""}>3 sec</option>
+      </select>`;
+          item.querySelector("select").addEventListener("change", function () {
+            state.classes[c] = Number(this.value);
+            item.className = "class-item" + (state.classes[c] > 0 ? " active" : "");
+            deriveClassSubjects();
+            state.grids = {};
+            state.activeTab = "";
+            save();
+            renderCombinedSessions();
+            renderLabGroups();
+            renderAll();
+          });
+          wrap.appendChild(item);
+        }
+      }
+
+      // ---- DAY GRID ----
+      function renderDayGrid() {
+        const wrap = document.getElementById("dayGrid");
+        wrap.innerHTML = "";
+        DAY_NAMES.forEach((name, i) => {
+          const d = document.createElement("div");
+          d.className = "daychip" + (state.days[i] ? " on" : "");
+          d.textContent = name;
+          d.addEventListener("click", () => {
+            state.days[i] = !state.days[i];
+            renderDayGrid();
+            save();
+          });
+          wrap.appendChild(d);
+        });
+      }
+
+      // ---- COMBINED SESSIONS ----
+      function renderCombinedSessions() {
+        const wrap = document.getElementById("combinedSessionsList");
+        const sections = getSections();
+        const list = state.combinedSessions || [];
+
+        if (list.length === 0) {
+          wrap.innerHTML = '<div class="cs-empty">No combined sessions yet. Use this for a teacher who runs one shared class across several sections at the same time.</div>';
+          return;
+        }
+
+        wrap.innerHTML = "";
+        list.forEach((cs, idx) => {
+          const item = document.createElement("div");
+          item.className = "cs-item";
+          const selOptions = sections.map(sec =>
+            `<option value="${sec}"${(cs.sections || []).includes(sec) ? " selected" : ""}>Class ${sec}</option>`
+          ).join("");
+          item.innerHTML = `
+      <div class="row2">
+        <div><label>Subject</label><input type="text" data-field="subject" value="${escHtml(cs.subject || "")}" placeholder="e.g. P.T."></div>
+        <div><label>Teacher</label><input type="text" data-field="teacher" value="${escHtml(cs.teacher || "")}" placeholder="e.g. Coach Raju"></div>
+      </div>
+      <div class="row2">
+        <div><label>Periods / week</label><input type="number" data-field="periodsPerWeek" value="${cs.periodsPerWeek || 2}" min="1" max="20"></div>
+        <div><label>Sections in this group</label><select multiple data-field="sections">${selOptions}</select></div>
+      </div>
+      <div class="cs-foot">
+        <span class="cs-hint">${(cs.sections || []).length} section(s) selected — hold ctrl/cmd-click to pick several</span>
+        <button class="del-cs" type="button">Remove</button>
+      </div>
+    `;
+
+          const onChange = () => {
+            cs.subject = item.querySelector('[data-field="subject"]').value.trim();
+            cs.teacher = item.querySelector('[data-field="teacher"]').value.trim();
+            cs.periodsPerWeek = Number(item.querySelector('[data-field="periodsPerWeek"]').value) || 1;
+            cs.sections = Array.from(item.querySelector('[data-field="sections"]').selectedOptions).map(o => o.value);
+            item.querySelector(".cs-hint").textContent = `${cs.sections.length} section(s) selected — hold ctrl/cmd-click to pick several`;
+            state.grids = {}; state.activeTab = "";
+            deriveClassSubjects();
+            save();
+            renderAll();
+          };
+          item.querySelectorAll("input,select").forEach(el => {
+            el.addEventListener("change", onChange);
+            if (el.tagName === "INPUT") el.addEventListener("input", onChange);
+          });
+          item.querySelector(".del-cs").addEventListener("click", () => {
+            state.combinedSessions.splice(idx, 1);
+            state.grids = {}; state.activeTab = "";
+            deriveClassSubjects();
+            save();
+            renderCombinedSessions();
+            renderAll();
+          });
+
+          wrap.appendChild(item);
+        });
+      }
+
+      function initCombinedSessions() {
+        const downloadBtn = document.getElementById("downloadCombinedSessionsCsvBtn");
+        const importBtn = document.getElementById("importCombinedSessionsCsvBtn");
+        const fileInput = document.getElementById("combinedSessionsCsvInput");
+
+        if (downloadBtn) {
+          downloadBtn.addEventListener("click", exportCombinedSessionsCsv);
+        }
+        if (importBtn && fileInput) {
+          importBtn.addEventListener("click", () => fileInput.click());
+          fileInput.addEventListener("change", () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+              const result = importCombinedSessionsCsv(ev.target.result);
+              if (result.ok) {
+                alert(result.msg);
+                save();
+              } else {
+                alert(result.msg);
+              }
+            };
+            reader.readAsText(file);
+          });
+        }
+
+        document.getElementById("addCombinedSessionBtn").addEventListener("click", () => {
+          if (!state.combinedSessions) state.combinedSessions = [];
+          state.combinedSessions.push({
+            id: genCombinedId(),
+            subject: "", teacher: "", periodsPerWeek: 2, sections: []
+          });
+          save();
+          renderCombinedSessions();
+        });
+      }
+      let __csIdCounter = 1;
+      function genCombinedId() { return "cs_" + (__csIdCounter++) + "_" + Math.random().toString(36).slice(2, 7); }
+
+      // ---- LAB BLOCKS (fixed double-period rotation) ----
+      function ensureLabBlocks() {
+        if (!state.labBlocks) state.labBlocks = { subject: "Computer", pairs: [[0, 1]], groups: [] };
+        if (!Array.isArray(state.labBlocks.pairs)) state.labBlocks.pairs = [[0, 1]];
+        if (!Array.isArray(state.labBlocks.groups)) state.labBlocks.groups = [];
+      }
+
+      function renderLabPairsPicker() {
+        ensureLabBlocks();
+        const wrap = document.getElementById("labPairsList");
+        const periodsPerDay = Number(state.periodsPerDay) || 6;
+        // every consecutive pair P(n)-P(n+1) is selectable; pairs are stored as [a,b] 0-indexed
+        const allPairs = [];
+        for (let p = 0; p < periodsPerDay - 1; p++) allPairs.push([p, p + 1]);
+
+        wrap.innerHTML = "";
+        allPairs.forEach(pair => {
+          const isOn = (state.labBlocks.pairs || []).some(sel => sel[0] === pair[0] && sel[1] === pair[1]);
+          const chip = document.createElement("div");
+          chip.className = "daychip lab-pair-chip" + (isOn ? " on" : "");
+          chip.textContent = `P${pair[0] + 1}-P${pair[1] + 1}`;
+          chip.addEventListener("click", () => {
+            const idx = state.labBlocks.pairs.findIndex(sel => sel[0] === pair[0] && sel[1] === pair[1]);
+            if (idx >= 0) state.labBlocks.pairs.splice(idx, 1);
+            else state.labBlocks.pairs.push(pair);
+            state.grids = {}; state.activeTab = "";
+            save();
+            renderLabPairsPicker();
+            renderAll();
+          });
+          wrap.appendChild(chip);
+        });
+        if (allPairs.length === 0) {
+          wrap.innerHTML = '<div class="cs-empty">Increase "Periods / day" above to at least 2 to enable double-period blocks.</div>';
+        }
+      }
+
+      function renderLabGroups() {
+        ensureLabBlocks();
+        const wrap = document.getElementById("labGroupsList");
+        const sections = getSections();
+        const groups = state.labBlocks.groups;
+
+        if (groups.length === 0) {
+          wrap.innerHTML = '<div class="cs-empty">No teacher/section groups yet. Add one per teacher covering a set of sections (combine sections that share one teacher into one group for a joint block, or list a single section for its own block).</div>';
+          return;
+        }
+
+        wrap.innerHTML = "";
+        groups.forEach((g, idx) => {
+          const item = document.createElement("div");
+          item.className = "cs-item";
+          const selOptions = sections.map(sec =>
+            `<option value="${sec}"${(g.sections || []).includes(sec) ? " selected" : ""}>Class ${sec}</option>`
+          ).join("");
+          item.innerHTML = `
+      <div class="row2">
+        <div><label>Teacher</label><input type="text" data-field="teacher" value="${escHtml(g.teacher || "")}" placeholder="e.g. Steve Jobs"></div>
+        <div><label>Blocks / week</label><input type="number" data-field="blocksPerWeek" value="${g.blocksPerWeek || 1}" min="1" max="10"></div>
+      </div>
+      <div class="field">
+        <label>Sections in this group (combine to share one block, e.g. 1A+1B)</label>
+        <select multiple data-field="sections">${selOptions}</select>
+      </div>
+      <div class="cs-foot">
+        <span class="cs-hint">${(g.sections || []).length} section(s) selected</span>
+        <button class="del-cs" type="button">Remove</button>
+      </div>
+    `;
+          const onChange = () => {
+            g.teacher = item.querySelector('[data-field="teacher"]').value.trim();
+            g.blocksPerWeek = Number(item.querySelector('[data-field="blocksPerWeek"]').value) || 1;
+            g.sections = Array.from(item.querySelector('[data-field="sections"]').selectedOptions).map(o => o.value);
+            item.querySelector(".cs-hint").textContent = `${g.sections.length} section(s) selected`;
+            state.grids = {}; state.activeTab = "";
+            save();
+            renderAll();
+          };
+          item.querySelectorAll("input,select").forEach(el => {
+            el.addEventListener("change", onChange);
+            if (el.tagName === "INPUT") el.addEventListener("input", onChange);
+          });
+          item.querySelector(".del-cs").addEventListener("click", () => {
+            state.labBlocks.groups.splice(idx, 1);
+            state.grids = {}; state.activeTab = "";
+            save();
+            renderLabGroups();
+            renderAll();
+          });
+          wrap.appendChild(item);
+        });
+      }
+
+      function initLabBlocks() {
+        ensureLabBlocks();
+        const subjEl = document.getElementById("labSubject");
+        const downloadBtn = document.getElementById("downloadLabBlocksCsvBtn");
+        const importBtn = document.getElementById("importLabBlocksCsvBtn");
+        const fileInput = document.getElementById("labBlocksCsvInput");
+
+        if (downloadBtn) {
+          downloadBtn.addEventListener("click", exportLabBlocksCsv);
+        }
+        if (importBtn && fileInput) {
+          importBtn.addEventListener("click", () => fileInput.click());
+          fileInput.addEventListener("change", () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+              const result = importLabBlocksCsv(ev.target.result);
+              if (result.ok) {
+                alert(result.msg);
+                save();
+              } else {
+                alert(result.msg);
+              }
+            };
+            reader.readAsText(file);
+          });
+        }
+
+        subjEl.value = state.labBlocks.subject || "";
+        subjEl.addEventListener("input", () => {
+          state.labBlocks.subject = subjEl.value.trim();
+          save();
+        });
+        subjEl.addEventListener("change", () => {
+          state.grids = {}; state.activeTab = "";
+          save();
+          renderAll();
+        });
+
+        document.getElementById("addLabGroupBtn").addEventListener("click", () => {
+          state.labBlocks.groups.push({ id: genCombinedId(), teacher: "", sections: [], blocksPerWeek: 1 });
+          save();
+          renderLabGroups();
+        });
+      }
+
+      // ---- IMPORT UI ----
+      function renderImportPreview(msgs) {
+        const el = document.getElementById("importPreview");
+        if (!msgs || msgs.length === 0) { el.innerHTML = ""; return; }
+        el.innerHTML = msgs.slice(0, 20).map(m =>
+          `<div class="import-row ${m.ok ? "ok" : "warn"}">${m.ok ? "✓" : "!"} ${escHtml(m.msg)}</div>`
+        ).join("") + (msgs.length > 20 ? `<div class="import-row">… and ${msgs.length - 20} more rows</div>` : "");
+      }
+
+      function initImport() {
+        const zone = document.getElementById("importZone");
+        const fileInput = document.getElementById("importFile");
+
+        zone.addEventListener("click", () => fileInput.click());
+        zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("drag"); });
+        zone.addEventListener("dragleave", () => zone.classList.remove("drag"));
+        zone.addEventListener("drop", e => {
+          e.preventDefault(); zone.classList.remove("drag");
+          const file = e.dataTransfer.files[0];
+          if (file) readFile(file);
+        });
+        fileInput.addEventListener("change", () => {
+          if (fileInput.files[0]) readFile(fileInput.files[0]);
+        });
+
+        function readFile(file) {
+          const name = (file.name || "").toLowerCase();
+          const isExcel = name.endsWith(".xlsx") || name.endsWith(".xls");
+          const reader = new FileReader();
+          reader.onload = ev => {
+            const result = isExcel ? importWorkbook(ev.target.result) : importCSV(ev.target.result);
+            const status = document.getElementById("importStatus");
+            if (result.ok) {
+              status.innerHTML = `<div class="success">✓ Imported ${state.importedTeachers.length} teacher assignments.</div>`;
+              renderImportPreview(result.msgs);
+              save();
+              renderAll();
+              setTimeout(() => status.innerHTML = "", 4000);
+            } else {
+              status.innerHTML = `<div class="warning">${escHtml(result.msg)}</div>`;
+            }
+          };
+          if (isExcel) reader.readAsArrayBuffer(file);
+          else reader.readAsText(file);
+        }
+
+        document.getElementById("loadSampleBtn").addEventListener("click", () => {
+          const result = importCSV(SAMPLE_CSV);
+          const status = document.getElementById("importStatus");
+          status.innerHTML = `<div class="success">✓ Sample data loaded (${state.importedTeachers.length} assignments).</div>`;
+          renderImportPreview(result.msgs);
+          renderAll();
+          setTimeout(() => status.innerHTML = "", 4000);
+        });
+
+        const exportImportBtn = document.getElementById("exportImportCsvBtn");
+        if (exportImportBtn) {
+          exportImportBtn.addEventListener("click", exportTeacherScheduleCsv);
+        }
+
+        document.getElementById("clearImportBtn").addEventListener("click", () => {
+          state.importedTeachers = [];
+          state.classSubjects = {};
+          state.grids = {};
+          state.activeTab = "";
+          document.getElementById("importPreview").innerHTML = "";
+          document.getElementById("importStatus").innerHTML = "";
+          save();
+          renderAll();
+        });
+      }
+
+      function exportTeacherScheduleCsv() {
+        const rows = (state.importedTeachers || []).map(t => ({
+          Subject: t.subject || "",
+          Teacher: t.teacher || "",
+          Classes: (t.classes || []).join(";") || "",
+          Periods: t.periodsPerWeek || ""
+        }));
+        if (rows.length === 0) {
+          alert("No imported teacher schedule data available.");
+          return;
+        }
+        const csv = Papa.unparse(rows, { quotes: true });
+        downloadTextFile("teacher-schedule.csv", csv, "text/csv;charset=utf-8;");
+      }
+
+      // ---- CSV EXPORT ----
+      function exportCSV() {
+        const sec = state.activeTab;
+        if (!sec || !state.grids[sec]) { alert("Generate a timetable first."); return; }
+        const activeDays = [];
+        state.days.forEach((on, i) => { if (on) activeDays.push(i); });
+        const subjects = state.classSubjects[sec] || [];
+        const rows = buildRowPlan();
+        const times = buildTimeMap(rows);
+        const header = ["Time", ...activeDays.map(d => DAY_NAMES[d])];
+        const lines = [header];
+        rows.forEach((row, ri) => {
+          const t = times[ri];
+          if (row.type === "break") {
+            lines.push([fmt12(t.start), ...activeDays.map(() => "BREAK")]);
+          } else {
+            const line = [fmt12(t.start) + "-" + fmt12(t.end)];
+            activeDays.forEach(dayIdx => {
+              const subId = (state.grids[sec][dayIdx] && state.grids[sec][dayIdx][row.index]) || 0;
+              const subj = subjects.find(s => s.id === subId);
+              line.push(subj ? subj.name + (subj.teacher && subj.teacher !== "TBD" ? " (" + subj.teacher + ")" : "") : "Free");
+            });
+            lines.push(line);
+          }
+        });
+        const csv = lines.map(l => l.map(c => { const v = String(c).replace(/"/g, '""'); return /[,"\n]/.test(v) ? '"' + v + '"' : v; }).join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `timetable_class_${sec}.csv`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      // ---- YAML EXPORT ----
+      function downloadTextFile(filename, content, mime = "text/plain;charset=utf-8;") {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function downloadYamlFile(filename, content) {
+        downloadTextFile(filename, content, "text/yaml;charset=utf-8;");
+      }
+
+      function exportConfigYaml() {
+        const yaml = jsyaml.dump(getConfigForExport(), { noRefs: true });
+        downloadYamlFile("timetable-builder-config.yaml", yaml);
+      }
+
+      function getConfigYamlText() {
+        return jsyaml.dump(getConfigForExport(), { noRefs: true });
+      }
+
+      function showConfigYaml() {
+        document.getElementById("configYamlTextarea").value = getConfigYamlText();
+      }
+
+      function downloadConfigYaml() {
+        let yaml = document.getElementById("configYamlTextarea").value.trim();
+        if (!yaml) yaml = getConfigYamlText();
+        if (!yaml) { alert("No configuration available to download."); return; }
+        downloadYamlFile("timetable-builder-config.yaml", yaml);
+      }
+
+      function parseYaml(text) {
+        return jsyaml.load(text);
+      }
+
+      function exportCombinedSessionsCsv() {
+        const rows = (state.combinedSessions || []).map(cs => ({
+          id: cs.id || "",
+          subject: cs.subject || "",
+          teacher: cs.teacher || "",
+          periodsPerWeek: cs.periodsPerWeek || "",
+          sections: (cs.sections || []).join(";")
+        }));
+        const csv = Papa.unparse(rows, { quotes: true });
+        downloadTextFile("combined-sessions.csv", csv, "text/csv;charset=utf-8;");
+      }
+
+      function parseSectionsValue(raw) {
+        if (!raw) return [];
+        return String(raw).split(/;|,/).map(s => s.trim()).filter(Boolean);
+      }
+
+      function importCombinedSessionsCsv(csvText) {
+        const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+        if (parsed.errors && parsed.errors.length) {
+          return { ok: false, msg: parsed.errors.map(e => e.message).join("; ") };
+        }
+        const sessions = parsed.data.map(row => ({
+          id: row.id || genCombinedId(),
+          subject: String(row.subject || "").trim(),
+          teacher: String(row.teacher || "").trim(),
+          periodsPerWeek: Number(row.periodsPerWeek || row.periods || 2) || 2,
+          sections: parseSectionsValue(row.sections || row.section || "")
+        })).filter(cs => cs.subject || cs.teacher || cs.sections.length > 0);
+        state.combinedSessions = sessions;
+        state.grids = {};
+        state.activeTab = "";
+        deriveClassSubjects();
+        save();
+        renderCombinedSessions();
+        renderAll();
+        return { ok: true, msg: `Imported ${sessions.length} combined session(s).` };
+      }
+
+      function exportLabBlocksCsv() {
+        const rows = (state.labBlocks.groups || []).map(g => ({
+          id: g.id || "",
+          teacher: g.teacher || "",
+          blocksPerWeek: g.blocksPerWeek || "",
+          sections: (g.sections || []).join(";"),
+          subject: state.labBlocks.subject || "",
+          pairs: (state.labBlocks.pairs || []).map(pair => `${pair[0]}-${pair[1]}`).join(";")
+        }));
+        const csv = Papa.unparse(rows, { quotes: true });
+        downloadTextFile("lab-blocks.csv", csv, "text/csv;charset=utf-8;");
+      }
+
+      function importLabBlocksCsv(csvText) {
+        const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+        if (parsed.errors && parsed.errors.length) {
+          return { ok: false, msg: parsed.errors.map(e => e.message).join("; ") };
+        }
+        const groups = parsed.data.map(row => ({
+          id: row.id || genCombinedId(),
+          teacher: String(row.teacher || "").trim(),
+          blocksPerWeek: Number(row.blocksPerWeek || row.blocks || 1) || 1,
+          sections: parseSectionsValue(row.sections || row.section || "")
+        })).filter(g => g.teacher || g.sections.length > 0);
+        if (parsed.data.length > 0) {
+          const first = parsed.data[0];
+          if (first.subject) state.labBlocks.subject = String(first.subject).trim();
+          if (first.pairs) {
+            state.labBlocks.pairs = String(first.pairs).split(/;|,/).map(part => {
+              const [a, b] = String(part).trim().split("-").map(Number);
+              return Number.isFinite(a) && Number.isFinite(b) ? [a, b] : null;
+            }).filter(Boolean);
+          }
+        }
+        state.labBlocks.groups = groups;
+        state.grids = {};
+        state.activeTab = "";
+        save();
+        renderLabGroups();
+        renderAll();
+        return { ok: true, msg: `Imported ${groups.length} lab block group(s).` };
+      }
+
+      function getConfigForExport() {
+        return {
+          instName: state.instName,
+          ttTitle: state.ttTitle,
+          days: state.days.map((enabled, index) => enabled ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index] : null).filter(Boolean),
+          startTime: state.startTime,
+          periodDur: state.periodDur,
+          periodsPerDay: state.periodsPerDay,
+          breakAfter: state.breakAfter,
+          breakDur: state.breakDur,
+          minFreePerDay: state.minFreePerDay,
+          maxFreePerDay: state.maxFreePerDay,
+          classes: state.classes,
+          importedTeachers: state.importedTeachers,
+          combinedSessions: state.combinedSessions,
+          labBlocks: state.labBlocks
+        };
+      }
+
+      function applyExportConfig(config) {
+        if (!config || typeof config !== "object") {
+          alert("Invalid YAML config.");
+          return;
+        }
+
+        if (config.instName !== undefined) state.instName = String(config.instName || "");
+        if (config.ttTitle !== undefined) state.ttTitle = String(config.ttTitle || "");
+        if (Array.isArray(config.days)) {
+          const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+          state.days = DAY_NAMES.map(day => config.days.includes(day));
+        }
+        if (config.startTime !== undefined) state.startTime = String(config.startTime || "09:00");
+        if (config.periodDur !== undefined) state.periodDur = Number(config.periodDur) || 40;
+        if (config.periodsPerDay !== undefined) state.periodsPerDay = Number(config.periodsPerDay) || 6;
+        if (config.breakAfter !== undefined) state.breakAfter = Number(config.breakAfter) || 2;
+        if (config.breakDur !== undefined) state.breakDur = Number(config.breakDur) || 15;
+        if (config.minFreePerDay !== undefined) state.minFreePerDay = Number(config.minFreePerDay) || 1;
+        if (config.maxFreePerDay !== undefined) state.maxFreePerDay = Number(config.maxFreePerDay) || 2;
+
+        if (config.classes && typeof config.classes === "object") {
+          state.classes = {};
+          Object.keys(config.classes).forEach(key => {
+            const classKey = Number(key);
+            if (!Number.isNaN(classKey) && classKey >= 1 && classKey <= 10) {
+              state.classes[classKey] = Number(config.classes[key]) || 0;
+            }
+          });
+        }
+
+        if (Array.isArray(config.importedTeachers)) state.importedTeachers = config.importedTeachers.map(item => ({
+          subject: item.subject || "",
+          teacher: item.teacher || "",
+          classes: Array.isArray(item.classes) ? item.classes.map(String) : [],
+          periodsPerWeek: Number(item.periodsPerWeek || item.periods || 0)
+        }));
+
+        if (Array.isArray(config.combinedSessions)) state.combinedSessions = config.combinedSessions.map(item => ({
+          id: item.id || state.nextId++,
+          subject: item.subject || "",
+          teacher: item.teacher || "",
+          sections: Array.isArray(item.sections) ? item.sections.map(String) : [],
+          periodsPerWeek: Number(item.periodsPerWeek || item.periods || 0)
+        }));
+
+        if (config.labBlocks && typeof config.labBlocks === "object") {
+          state.labBlocks = {
+            subject: String(config.labBlocks.subject || ""),
+            pairs: Array.isArray(config.labBlocks.pairs) ? config.labBlocks.pairs.map(pair => Array.isArray(pair) ? pair.map(Number) : []).filter(pair => pair.length === 2) : [],
+            groups: Array.isArray(config.labBlocks.groups) ? config.labBlocks.groups : []
+          };
+        }
+
+        deriveClassSubjects();
+        state.grids = {};
+        state.activeTab = getSections()[0] || "";
+        save();
+        renderDayGrid();
+        renderClassGrid();
+        renderCombinedSessions();
+        ensureLabBlocks();
+        renderLabPairsPicker();
+        renderLabGroups();
+        renderAll();
+      }
+
+      function importConfigYaml() {
+        const text = document.getElementById("configYamlTextarea").value.trim();
+        if (!text) {
+          alert("Paste YAML into the textarea before importing.");
+          return;
+        }
+        try {
+          const parsed = parseYaml(text);
+          applyExportConfig(parsed);
+          alert("YAML configuration imported successfully.");
+        } catch (err) {
+          alert("Could not parse YAML config. Check the syntax and try again.");
+          console.error(err);
+        }
+      }
+
+      // ---- BIND CONTROLS ----
+      function bindControls() {
+        const bind = (id, prop, cb) => {
+          const el = document.getElementById(id);
+          el.value = state[prop] !== undefined ? String(state[prop]) : "";
+          el.addEventListener("input", () => { state[prop] = isNaN(Number(el.value)) ? el.value : el.type === "number" ? Number(el.value) : el.value; save(); cb && cb(); renderAll(); });
+          el.addEventListener("change", () => { state[prop] = isNaN(Number(el.value)) ? el.value : el.type === "number" ? Number(el.value) : el.value; save(); cb && cb(); renderAll(); });
+        };
+        bind("instName", "instName");
+        bind("ttTitle", "ttTitle");
+        bind("startTime", "startTime");
+        bind("periodDur", "periodDur");
+        bind("periodsPerDay", "periodsPerDay", () => { state.grids = {}; renderLabPairsPicker(); });
+        bind("breakAfter", "breakAfter");
+        bind("breakDur", "breakDur");
+        bind("minFreePerDay", "minFreePerDay");
+        bind("maxFreePerDay", "maxFreePerDay");
+
+        document.getElementById("preset1Btn").addEventListener("click", () => {
+          // 10,9,8,7 → 1 section; 6,5,4,3,2,1 → 2 sections
+          [10, 9, 8, 7].forEach(c => state.classes[c] = 1);
+          [6, 5, 4, 3, 2, 1].forEach(c => state.classes[c] = 2);
+          state.grids = {}; state.activeTab = "";
+          deriveClassSubjects(); save(); renderClassGrid(); renderCombinedSessions(); renderLabGroups(); renderAll();
+        });
+        document.getElementById("allOneBtn").addEventListener("click", () => {
+          for (let c = 1; c <= 10; c++) state.classes[c] = 1;
+          state.grids = {}; state.activeTab = "";
+          deriveClassSubjects(); save(); renderClassGrid(); renderCombinedSessions(); renderLabGroups(); renderAll();
+        });
+        document.getElementById("allTwoBtn").addEventListener("click", () => {
+          for (let c = 1; c <= 10; c++) state.classes[c] = 2;
+          state.grids = {}; state.activeTab = "";
+          deriveClassSubjects(); save(); renderClassGrid(); renderCombinedSessions(); renderLabGroups(); renderAll();
+        });
+
+        document.getElementById("generateAllBtn").addEventListener("click", generateAll);
+        document.getElementById("clearAllBtn").addEventListener("click", () => {
+          state.grids = {}; state.activeTab = "";
+          save(); renderAll();
+        });
+        document.getElementById("resetBtn").addEventListener("click", () => {
+          if (!confirm("Reset everything to defaults? This clears classes & sections, days & periods, imported teachers, combined sessions, lab blocks, and every generated timetable grid.")) return;
+          resetEverything();
+        });
+        document.getElementById("printBtn").addEventListener("click", () => window.print());
+        document.getElementById("csvBtn").addEventListener("click", exportCSV);
+        const showYamlBtn = document.getElementById("showConfigYamlBtn");
+        const downloadYamlBtn = document.getElementById("downloadConfigYamlBtn");
+        const importYamlBtn = document.getElementById("importConfigYamlBtn");
+        if (showYamlBtn) showYamlBtn.addEventListener("click", showConfigYaml);
+        if (downloadYamlBtn) downloadYamlBtn.addEventListener("click", downloadConfigYaml);
+        if (importYamlBtn) importYamlBtn.addEventListener("click", importConfigYaml);
+      }
+
+      // Fully restore `state` to its pristine defaults and re-render every part of the UI.
+      // Done in-place (rather than via localStorage.removeItem + location.reload) so the reset
+      // is reliable everywhere this file runs, including inside embedded/sandboxed viewers where
+      // a reload of the document isn't guaranteed to re-fetch a clean copy.
+      function resetEverything() {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) { }
+        state = JSON.parse(DEFAULT_STATE_JSON);
+        __csIdCounter = 1;
+        save();
+
+        // resync every plain input/select to the restored defaults
+        document.getElementById("instName").value = state.instName;
+        document.getElementById("ttTitle").value = state.ttTitle;
+        document.getElementById("startTime").value = state.startTime;
+        document.getElementById("periodDur").value = String(state.periodDur);
+        document.getElementById("periodsPerDay").value = String(state.periodsPerDay);
+        document.getElementById("breakAfter").value = String(state.breakAfter);
+        document.getElementById("breakDur").value = String(state.breakDur);
+        document.getElementById("minFreePerDay").value = String(state.minFreePerDay);
+        document.getElementById("maxFreePerDay").value = String(state.maxFreePerDay);
+        document.getElementById("labSubject").value = state.labBlocks.subject || "";
+        document.getElementById("importPreview").innerHTML = "";
+        document.getElementById("importStatus").innerHTML = "";
+        document.getElementById("globalWarning").innerHTML = "";
+
+        renderDayGrid();
+        renderClassGrid();
+        renderCombinedSessions();
+        ensureLabBlocks();
+        renderLabPairsPicker();
+        renderLabGroups();
+        renderAll();
+        showGlobalWarning("✓ Everything has been reset to defaults.", true);
+      }
+
+      // ---- INIT ----
+      load();
+      bindControls();
+      renderDayGrid();
+      renderClassGrid();
+      initImport();
+      initCombinedSessions();
+      renderCombinedSessions();
+      initLabBlocks();
+      renderLabPairsPicker();
+      renderLabGroups();
+      // If there's imported data already, re-derive
+      if (state.importedTeachers && state.importedTeachers.length > 0) deriveClassSubjects();
+      if (getSections().length > 0 && !state.activeTab) state.activeTab = getSections()[0];
+      renderAll();
+
+    })();
+  </script>
+</body>
+
+</html>
